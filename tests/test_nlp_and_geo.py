@@ -44,6 +44,14 @@ class TestLanguageFilter:
         fr_text = "Nous recherchons un ingénieur BIM expérimenté pour nos chantiers."
         assert flt.is_accepted(fr_text) is False
 
+    def test_english_post_with_foreign_hashtag_accepted(self):
+        flt = LanguageFilter()
+        text = (
+            "We are hiring a Senior BIM Coordinator in London for major healthcare projects "
+            "across the United Kingdom. Requirements include 5 years Revit experience. Apply now! #وظائف #BIM"
+        )
+        assert flt.is_accepted(text) is True
+
 
 class TestGeoValidator:
     """Test suite for geographic validation and regional exclusion."""
@@ -57,7 +65,7 @@ class TestGeoValidator:
         return CountryTarget(
             code="103644278",
             location_names=["USA", "United States"],
-            keywords=["united states", "usa", "us", "new york", "california", "texas"],
+            keywords=["united states", "usa", "us", "u.s.", "new york", "california", "texas"],
         )
 
     @pytest.fixture
@@ -83,8 +91,20 @@ class TestGeoValidator:
         # Indianapolis should NOT be falsely excluded
         assert validator.is_excluded("We are hosting an AEC conference in Indianapolis next week") is False
 
+    def test_indiana_state_not_falsely_excluded(self, validator):
+        # US State Indiana must NOT be falsely excluded as India
+        assert validator.is_excluded("We have a major BIM highway project in Indiana, USA") is False
+
+    def test_indian_single_mention_not_falsely_excluded(self, validator):
+        # Incidental single mention of 'Indian' without secondary indicators must not trigger exclusion
+        assert validator.is_excluded("Looking for an Indian architect based in New York office") is False
+
     def test_verify_content_valid_us(self, validator, us_target):
         content = "We have an open role for a Revit specialist in New York office."
+        assert validator.verify_content(content, country="United States", country_target=us_target) is True
+
+    def test_verify_content_boundary_u_s(self, validator, us_target):
+        content = "Project located in the U.S. today."
         assert validator.verify_content(content, country="United States", country_target=us_target) is True
 
     def test_verify_content_short_token_boundary(self, validator, us_target):

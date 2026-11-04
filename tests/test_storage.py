@@ -83,6 +83,35 @@ class TestDatabaseStorage:
         paged = temp_db.get_leads(limit=1)
         assert len(paged) == 1
 
+        # Pagination offset without limit (must not raise SQLite syntax error)
+        offset_leads = temp_db.get_leads(offset=1)
+        assert len(offset_leads) == 1
+
+        # Case-insensitive filtering
+        ci_leads = temp_db.get_leads(country="united kingdom")
+        assert len(ci_leads) == 1
+
+    def test_hash_collision_prevention_missing_post_url(self, temp_db: Database):
+        # Two distinct posts by the same author where post_url could not be resolved
+        lead1 = Lead(
+            author_url="https://linkedin.com/in/architect-jane",
+            post_url="N/A",
+            author_name="Jane",
+            post_text="First post about BIM modeling in 2026",
+            post_date="1d",
+        )
+        lead2 = Lead(
+            author_url="https://linkedin.com/in/architect-jane",
+            post_url="N/A",
+            author_name="Jane",
+            post_text="Second post about Revit automation workflows",
+            post_date="2d",
+        )
+        assert lead1.hash_id != lead2.hash_id
+        assert temp_db.insert_lead(lead1) is True
+        assert temp_db.insert_lead(lead2) is True
+        assert temp_db.get_total_count() == 2
+
     def test_get_stats(self, temp_db: Database, sample_lead: Lead):
         temp_db.insert_lead(sample_lead)
         stats = temp_db.get_stats()

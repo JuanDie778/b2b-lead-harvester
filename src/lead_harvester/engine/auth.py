@@ -26,6 +26,8 @@ class LinkedInAuth:
         'input[aria-label="Buscar"]',
         'input[aria-label="Search"]',
         '.search-global-typeahead__input',
+        '#global-nav-typeahead input',
+        'nav.global-nav',
     ]
 
     @classmethod
@@ -45,11 +47,17 @@ class LinkedInAuth:
         """Dismiss common LinkedIn overlay modals and message popups."""
         try:
             for selector in cls.POPUP_SELECTORS:
-                buttons = await page.query_selector_all(selector)
-                for btn in buttons:
-                    if await btn.is_visible():
-                        await btn.click()
-                        await asyncio.sleep(0.5)
+                try:
+                    buttons = await page.query_selector_all(selector)
+                    for btn in buttons:
+                        try:
+                            if await btn.is_visible():
+                                await btn.click()
+                                await asyncio.sleep(0.3)
+                        except Exception:
+                            continue
+                except Exception:
+                    continue
         except Exception as e:
             logger.debug(f"Popup dismissal skipped or failed: {e}")
 

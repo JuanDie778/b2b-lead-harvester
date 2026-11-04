@@ -30,14 +30,24 @@ class LanguageFilter:
         if not text or text == "N/A" or len(text.strip()) < 10:
             return "unknown"
 
-        # Regex pre-checks for distinct scripts
-        if self.ARABIC_PATTERN.search(text):
+        letters = [c for c in text if c.isalpha()]
+        total_letters = len(letters) or 1
+
+        # Script density checks (requires >= 20% of letters or >= 15 characters to avoid false positives on stray hashtags)
+        ar_count = len(self.ARABIC_PATTERN.findall(text))
+        if ar_count / total_letters >= 0.20 or ar_count >= 15:
             return "ar"
-        if self.DEVANAGARI_PATTERN.search(text):
+
+        hi_count = len(self.DEVANAGARI_PATTERN.findall(text))
+        if hi_count / total_letters >= 0.20 or hi_count >= 15:
             return "hi"
-        if self.BENGALI_PATTERN.search(text):
+
+        bn_count = len(self.BENGALI_PATTERN.findall(text))
+        if bn_count / total_letters >= 0.20 or bn_count >= 15:
             return "bn"
-        if self.GURMUKHI_PATTERN.search(text):
+
+        pa_count = len(self.GURMUKHI_PATTERN.findall(text))
+        if pa_count / total_letters >= 0.20 or pa_count >= 15:
             return "pa"
 
         if langid is not None:

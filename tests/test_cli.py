@@ -67,6 +67,17 @@ class TestCliCommands:
         assert out_file.exists()
         assert "Successfully exported 1 leads" in result.stdout
 
+    def test_export_command_case_insensitive(self, temp_db: Database, sample_lead: Lead, tmp_path: Path):
+        temp_db.insert_lead(sample_lead)
+        out_file = tmp_path / "ci_leads.csv"
+        result = runner.invoke(
+            app,
+            ["export", "--db", str(temp_db.db_path), "--country", "united kingdom", "--format", "csv", "--output", str(out_file)],
+        )
+        assert result.exit_code == 0
+        assert out_file.exists()
+        assert "Successfully exported 1 leads" in result.stdout
+
     def test_export_command_no_matches(self, temp_db: Database, sample_lead: Lead, tmp_path: Path):
         temp_db.insert_lead(sample_lead)
         out_file = tmp_path / "filtered_out.csv"

@@ -6,6 +6,7 @@ from datetime import datetime
 import random
 import re
 from typing import Any, Dict, List, Optional
+from urllib.parse import quote
 from playwright.async_api import BrowserContext, ElementHandle, Page
 from ..core.logger import get_logger
 from ..core.models import CountryTarget, ExecutionStats, Lead, SearchPreset
@@ -39,7 +40,7 @@ class LeadScraper:
     @staticmethod
     def _extract_activity_id(data_urn: Optional[str]) -> Optional[str]:
         """Convert URN into canonical feed URL."""
-        if data_urn and "urn:li:activity:" in data_urn:
+        if data_urn and ("urn:li:activity:" in data_urn or "urn:li:ugcPost:" in data_urn):
             activity_id = data_urn.split(":")[-1]
             return f"https://www.linkedin.com/feed/update/{activity_id}/"
         return None
@@ -85,26 +86,39 @@ class LeadScraper:
         # 4. Post URL
         post_url = "N/A"
         try:
-            strategies = [
-                ('a.app-aware-link[href*="/feed/update/"]', "href"),
-                ('a[data-id*="share-"]', "href"),
-                (".feed-shared-update-v2", "data-urn"),
-            ]
-            for sel, attr in strategies:
-                el = await post.query_selector(sel)
-                if el:
-                    val = await el.get_attribute(attr)
-                    if val:
-                        if attr == "data-urn":
-                            extracted = self._extract_activity_id(val)
-                            if extracted:
-                                post_url = extracted
-                                break
-                        elif "/feed/update/" in val:
-                            post_url = val.split("?")[0].strip()
-                            break
+            # Check data-urn attribute directly on root post element first
+            root_urn = await post.get_attribute("data-urn")
+            if root_urn:
+                extracted = self._extract_activity_id(root_urn)
+                if extracted:
+                    post_url = extracted
         except Exception:
             pass
+
+        if post_url == "N/A":
+            try:
+                strategies = [
+                    ('a.app-aware-link[href*="/feed/update/"]', "href"),
+                    ('a[data-id*="share-"]', "href"),
+                    ('[data-urn*="urn:li:activity:"]', "data-urn"),
+                    ('[data-urn*="urn:li:ugcPost:"]', "data-urn"),
+                    (".feed-shared-update-v2", "data-urn"),
+                ]
+                for sel, attr in strategies:
+                    el = await post.query_selector(sel)
+                    if el:
+                        val = await el.get_attribute(attr)
+                        if val:
+                            if attr == "data-urn":
+                                extracted = self._extract_activity_id(val)
+                                if extracted:
+                                    post_url = extracted
+                                    break
+                            elif "/feed/update/" in val:
+                                post_url = val.split("?")[0].strip()
+                                break
+            except Exception:
+                pass
 
         # 5. Post Text Content
         post_text = "N/A"
@@ -257,7 +271,7 @@ class LeadScraper:
                     f"({term_idx + 1}/{len(self.preset.search_terms)})"
                 )
 
-                encoded_term = search_term.replace(" ", "%20")
+                encoded_term = quote(search_term, safe="")
                 search_url = (
                     f"https://www.linkedin.com/search/results/content/?"
                     f"keywords={encoded_term}"

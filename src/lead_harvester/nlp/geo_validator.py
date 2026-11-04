@@ -30,44 +30,70 @@ class GeoValidator:
     ) -> bool:
         """
         Check if text contains strong indications of excluded regions.
-        Requires >= threshold matches to prevent false positives (e.g. Indianapolis).
-        Direct flag indicators like flags or explicit 'based in india' count as immediate match.
+        Requires >= threshold distinct matches to prevent false positives (e.g. Indiana, Indian cuisine).
+        Direct flag indicators (🇮🇳) or explicit 'based in india' count as immediate match.
         """
         if not text or text == "N/A":
             return False
 
-        text_lower = text.lower()
-        active_indicators = indicators if indicators is not None else self.excluded_indicators
-
-        # Immediate single-hit indicators
-        if "🇮🇳" in text or "based in india" in text_lower or "located in india" in text_lower:
+        # 1. Immediate flag match
+        if "🇮🇳" in text:
             return True
 
-        hits = 0
-        for indicator in active_indicators:
-            # Skip checking "india" substring match inside "indianapolis"
-            if indicator == "india" and "indianapolis" in text_lower and text_lower.count("india") == 1:
-                continue
+        text_lower = text.lower()
 
-            if indicator in text_lower:
-                hits += 1
-                if hits >= threshold:
-                    return True
+        # 2. Immediate unambiguous phrases
+        immediate_phrases = [
+            "based in india",
+            "located in india",
+            "from india",
+            "india based",
+            "working in india",
+        ]
+        for phrase in immediate_phrases:
+            phrase_pat = rf"(?:(?<=\W)|^){re.escape(phrase)}(?:(?=\W)|$)"
+            if re.search(phrase_pat, text_lower):
+                return True
+
+        # 3. Threshold matching with boundary check & non-overlapping spans
+        active_indicators = (
+            [ind.lower() for ind in indicators]
+            if indicators is not None
+            else self.excluded_indicators
+        )
+
+        # Sort descending by length so longer phrases match before subphrases
+        sorted_ind = sorted(
+            [i for i in active_indicators if i != "🇮🇳" and i not in immediate_phrases],
+            key=len,
+            reverse=True,
+        )
+
+        matched_spans = []
+        hits = 0
+        for ind in sorted_ind:
+            pattern = rf"(?:(?<=\W)|^){re.escape(ind)}(?:(?=\W)|$)"
+            for m in re.finditer(pattern, text_lower):
+                start, end = m.span()
+                # Do not count if this span overlaps with an already matched longer indicator
+                if not any(s <= start and end <= e for s, e in matched_spans):
+                    matched_spans.append((start, end))
+                    hits += 1
+                    if hits >= threshold:
+                        return True
 
         return False
 
     @staticmethod
     def _matches_keyword(text_lower: str, keyword: str) -> bool:
-        """Match keyword, applying word boundary for short abbreviations."""
+        """Match keyword with robust word boundaries to prevent substring collisions."""
         kw_clean = keyword.lower().strip()
         if not kw_clean:
             return False
-            
-        if len(kw_clean) <= 3:
-            # Word boundary regex for short codes like "us", "uk", "co"
-            pattern = rf"\b{re.escape(kw_clean)}\b"
-            return bool(re.search(pattern, text_lower))
-        return kw_clean in text_lower
+
+        # Boundary-safe regex matching for both word characters and punctuation (e.g. "u.s.")
+        pattern = rf"(?:(?<=\W)|^){re.escape(kw_clean)}(?:(?=\W)|$)"
+        return bool(re.search(pattern, text_lower))
 
     def verify_content(
         self,

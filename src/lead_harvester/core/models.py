@@ -33,7 +33,12 @@ class SearchPreset(BaseModel):
         """Load and validate preset from a YAML file."""
         file_path = Path(path)
         if not file_path.is_file():
-            raise FileNotFoundError(f"Preset file not found: {file_path}")
+            # Try resolving relative to package / repo root
+            alt_path = Path(__file__).resolve().parents[3] / path
+            if alt_path.is_file():
+                file_path = alt_path
+            else:
+                raise FileNotFoundError(f"Preset file not found: {file_path}")
         
         with open(file_path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
@@ -62,12 +67,21 @@ class Lead(BaseModel):
     def compute_deterministic_hash(self) -> "Lead":
         """Generate deterministic SHA-256 idempotency hash if not already provided."""
         if not self.hash_id:
-            # When author_url and post_url exist and are not default placeholders
             author_val = self.author_url.strip() if self.author_url else "N/A"
             post_val = self.post_url.strip() if self.post_url else "N/A"
 
-            if author_val != "N/A" or post_val != "N/A":
+            # Normalize trailing slashes for URLs
+            if author_val != "N/A":
+                author_val = author_val.rstrip("/")
+            if post_val != "N/A":
+                post_val = post_val.rstrip("/")
+
+            if author_val != "N/A" and post_val != "N/A":
                 raw_token = f"{author_val}{post_val}"
+            elif post_val != "N/A":
+                raw_token = f"{post_val}"
+            elif author_val != "N/A":
+                raw_token = f"{author_val}:{self.author_name}:{self.post_text[:120]}:{self.post_date}"
             else:
                 raw_token = f"{self.author_name}:{self.post_text[:120]}:{self.post_date}"
 

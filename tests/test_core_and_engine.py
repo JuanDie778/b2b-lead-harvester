@@ -85,8 +85,35 @@ class TestScraperEngineUnit:
         url = LeadScraper._extract_activity_id(urn)
         assert url == "https://www.linkedin.com/feed/update/712398472938479238/"
 
+        ugc_urn = "urn:li:ugcPost:712398472938479238"
+        ugc_url = LeadScraper._extract_activity_id(ugc_urn)
+        assert ugc_url == "https://www.linkedin.com/feed/update/712398472938479238/"
+
         invalid_urn = "urn:li:fs_miniProfile:someid"
         assert LeadScraper._extract_activity_id(invalid_urn) is None
+
+    @pytest.mark.asyncio
+    async def test_extract_post_data_root_data_urn(
+        self,
+        temp_db: Database,
+        sample_preset_yaml: Path,
+    ):
+        preset = SearchPreset.load_from_yaml(sample_preset_yaml)
+        scraper = LeadScraper(preset=preset, database=temp_db)
+
+        # Root element itself has data-urn attribute (common in LinkedIn DOM)
+        root_post = MockElementHandle(
+            attributes={"data-urn": "urn:li:activity:554433221100"},
+            children={
+                ".update-components-actor__name": MockElementHandle(text="Alice Architect"),
+                ".update-components-actor__description": MockElementHandle(text="BIM Director"),
+                ".update-components-text": MockElementHandle(text="Exciting new BIM project in London!"),
+            },
+        )
+
+        data = await scraper.extract_post_data(root_post)
+        assert data["author_name"] == "Alice Architect"
+        assert data["post_url"] == "https://www.linkedin.com/feed/update/554433221100/"
 
     @pytest.mark.asyncio
     async def test_auth_dismiss_popups(self):

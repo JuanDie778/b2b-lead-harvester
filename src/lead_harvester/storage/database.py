@@ -1,9 +1,10 @@
 """SQLite database persistence with deterministic SHA-256 deduplication."""
 from __future__ import annotations
 
+from contextlib import contextmanager
 from pathlib import Path
 import sqlite3
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Generator, List, Optional, Tuple
 from ..core.models import Lead
 
 
@@ -35,17 +36,22 @@ class Database:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.init_db()
 
-    def _get_connection(self) -> sqlite3.Connection:
-        """Create a configured SQLite connection."""
-        conn = sqlite3.connect(str(self.db_path))
+    @contextmanager
+    def _connection(self) -> Generator[sqlite3.Connection, None, None]:
+        """Create, configure, manage transaction and cleanly close SQLite connection."""
+        conn = sqlite3.connect(str(self.db_path), timeout=30.0)
         conn.row_factory = sqlite3.Row
-        # Enable write-ahead logging for robustness
-        conn.execute("PRAGMA journal_mode=WAL;")
-        return conn
+        try:
+            # Enable write-ahead logging for robustness and concurrency
+            conn.execute("PRAGMA journal_mode=WAL;")
+            with conn:
+                yield conn
+        finally:
+            conn.close()
 
     def init_db(self) -> None:
         """Initialize database tables and indexes."""
-        with self._get_connection() as conn:
+        with self._connection() as conn:
             conn.executescript(self.SCHEMA)
 
     def insert_lead(self, lead: Lead) -> bool:
@@ -60,7 +66,7 @@ class Database:
             search_term, country, scraped_date
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         """
-        with self._get_connection() as conn:
+        with self._connection() as conn:
             cursor = conn.execute(
                 query,
                 (
@@ -89,7 +95,7 @@ class Database:
 
         inserted = 0
         ignored = 0
-        with self._get_connection() as conn:
+        with self._connection() as conn:
             for lead in leads:
                 query = """
                 INSERT OR IGNORE INTO leads (
@@ -133,14 +139,22 @@ class Database:
         params: List[Any] = []
 
         if country:
-            clauses.append("country = ?")
+            clauses.append("LOWER(country) = LOWER(?)")
             params.append(country)
         if search_term:
-            clauses.append("search_term = ?")
+            clauses.append("LOWER(search_term) = LOWER(?)")
             params.append(search_term)
 
         where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
-        limit_sql = f"LIMIT {int(limit)}" if limit is not None else ""
+
+        if limit is not None:
+            limit_sql = f"LIMIT {int(limit)}"
+        elif offset > 0:
+            # SQLite requires LIMIT when OFFSET is provided
+            limit_sql = "LIMIT -1"
+        else:
+            limit_sql = ""
+
         offset_sql = f"OFFSET {int(offset)}" if offset > 0 else ""
 
         query = f"""
@@ -153,7 +167,7 @@ class Database:
         {limit_sql} {offset_sql};
         """
 
-        with self._get_connection() as conn:
+        with self._connection() as conn:
             cursor = conn.execute(query, params)
             rows = cursor.fetchall()
 
@@ -176,13 +190,13 @@ class Database:
 
     def get_total_count(self) -> int:
         """Return total number of unique leads in the database."""
-        with self._get_connection() as conn:
+        with self._connection() as conn:
             cursor = conn.execute("SELECT COUNT(*) FROM leads;")
             return int(cursor.fetchone()[0])
 
     def get_stats(self) -> Dict[str, Any]:
         """Aggregate statistical summary of collected leads."""
-        with self._get_connection() as conn:
+        with self._connection() as conn:
             total = conn.execute("SELECT COUNT(*) FROM leads;").fetchone()[0]
 
             countries = dict(
