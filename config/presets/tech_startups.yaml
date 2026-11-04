@@ -1,0 +1,112 @@
+name: "Tech Startups & SaaS"
+description: "B2B lead generation targeting tech founders, CTOs, product managers, and engineering leaders."
+
+search_terms:
+  - "Founder & CEO"
+  - "Co-Founder"
+  - "CTO"
+  - "VP of Engineering"
+  - "Head of Growth"
+  - "Head of Product"
+  - "Product Manager"
+  - "SaaS Founder"
+  - "Tech Lead"
+  - "AI Engineer"
+
+countries:
+  United States:
+    code: "%5B%22urn%3Ali%3Afs_geo%3A103644278%22%5D"
+    location_names:
+      - "USA"
+      - "EEUU"
+      - "United States"
+      - "Estados Unidos"
+    keywords:
+      - "usa"
+      - "united states"
+      - "san francisco"
+      - "silicon valley"
+      - "new york"
+      - "austin"
+      - "seattle"
+      - "boston"
+      - "los angeles"
+  United Kingdom:
+    code: "%5B%22urn%3Ali%3Afs_geo%3A101165590%22%5D"
+    location_names:
+      - "UK"
+      - "United Kingdom"
+      - "Reino Unido"
+    keywords:
+      - "uk"
+      - "united kingdom"
+      - "london"
+      - "cambridge"
+      - "oxford"
+      - "manchester"
+      - "edinburgh"
+  Spain:
+    code: "%5B%22urn%3Ali%3Afs_geo%3A105646813%22%5D"
+    location_names:
+      - "Spain"
+      - "España"
+    keywords:
+      - "spain"
+      - "españa"
+      - "madrid"
+      - "barcelona"
+      - "valencia"
+      - "malaga"
+  Canada:
+    code: "%5B%22urn%3Ali%3Afs_geo%3A101174742%22%5D"
+    location_names:
+      - "Canada"
+      - "Canadá"
+    keywords:
+      - "canada"
+      - "toronto"
+      - "vancouver"
+      - "waterloo"
+      - "montreal"
+      - "ottawa"
+  Germany:
+    code: "%5B%22urn%3Ali%3Afs_geo%3A101282230%22%5D"
+    location_names:
+      - "Germany"
+      - "Deutschland"
+      - "Alemania"
+    keywords:
+      - "germany"
+      - "deutschland"
+      - "berlin"
+      - "munich"
+      - "münchen"
+      - "hamburg"
+      - "frankfurt"
+
+excluded_indicators:
+  - "india"
+  - "indian"
+  - "bangalore"
+  - "mumbai"
+  - "delhi"
+  - "chennai"
+  - "hyderabad"
+  - "kolkata"
+  - "pune"
+  - "bengaluru"
+  - "noida"
+  - "gurgaon"
+  - "ahmedabad"
+  - "🇮🇳"
+
+undesired_languages:
+  - "ar"
+  - "hi"
+  - "ur"
+  - "bn"
+  - "pa"
+
+max_posts_per_term: 40
+max_pages: 5
+max_posts_total: 500

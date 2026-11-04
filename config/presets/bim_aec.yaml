@@ -1,0 +1,133 @@
+name: "BIM & Architecture / AEC"
+description: "B2B lead generation targeting Building Information Modeling (BIM), Revit, and VDC professionals."
+
+search_terms:
+  - "BIM Modeler"
+  - "BIM Manager"
+  - "BIM Coordinator"
+  - "BIM Specialist"
+  - "BIM Designer"
+  - "BIM Engineer"
+  - "BIM Architect"
+  - "Revit Specialist"
+  - "Revit Modeler"
+  - "Revit Designer"
+  - "3D BIM"
+  - "VDC Engineer"
+  - "Building Information Modeling"
+  - "BIM Consultant"
+  - "BIM Project Manager"
+
+countries:
+  United States:
+    code: "%5B%22urn%3Ali%3Afs_geo%3A103644278%22%5D"
+    location_names:
+      - "USA"
+      - "EEUU"
+      - "United States"
+      - "Estados Unidos"
+    keywords:
+      - "usa"
+      - "united states"
+      - "estados unidos"
+      - "us"
+      - "u.s."
+      - "new york"
+      - "california"
+      - "texas"
+      - "florida"
+      - "chicago"
+  Canada:
+    code: "%5B%22urn%3Ali%3Afs_geo%3A101174742%22%5D"
+    location_names:
+      - "Canada"
+      - "Canadá"
+    keywords:
+      - "canada"
+      - "canadá"
+      - "toronto"
+      - "vancouver"
+      - "montreal"
+      - "calgary"
+      - "ottawa"
+  United Kingdom:
+    code: "%5B%22urn%3Ali%3Afs_geo%3A101165590%22%5D"
+    location_names:
+      - "UK"
+      - "United Kingdom"
+      - "Reino Unido"
+    keywords:
+      - "uk"
+      - "united kingdom"
+      - "london"
+      - "manchester"
+      - "england"
+      - "birmingham"
+      - "scotland"
+  Spain:
+    code: "%5B%22urn%3Ali%3Afs_geo%3A105646813%22%5D"
+    location_names:
+      - "Spain"
+      - "España"
+    keywords:
+      - "spain"
+      - "españa"
+      - "madrid"
+      - "barcelona"
+      - "valencia"
+      - "sevilla"
+      - "bilbao"
+  Colombia:
+    code: "%5B%22urn%3Ali%3Afs_geo%3A100876405%22%5D"
+    location_names:
+      - "Colombia"
+      - "CO"
+      - "Bogotá"
+      - "Medellín"
+      - "Cali"
+    keywords:
+      - "colombia"
+      - "bogota"
+      - "bogotá"
+      - "medellin"
+      - "medellín"
+      - "cali"
+      - "barranquilla"
+      - "cartagena"
+
+excluded_indicators:
+  - "india"
+  - "indian"
+  - "bangalore"
+  - "mumbai"
+  - "delhi"
+  - "chennai"
+  - "hyderabad"
+  - "kolkata"
+  - "pune"
+  - "bengaluru"
+  - "noida"
+  - "gurgaon"
+  - "ahmedabad"
+  - "india's"
+  - "from india"
+  - "based in india"
+  - "located in india"
+  - "bombay"
+  - "madras"
+  - "calcutta"
+  - "new delhi"
+  - "india based"
+  - "working in india"
+  - "🇮🇳"
+
+undesired_languages:
+  - "ar"
+  - "hi"
+  - "ur"
+  - "bn"
+  - "pa"
+
+max_posts_per_term: 40
+max_pages: 5
+max_posts_total: 500
